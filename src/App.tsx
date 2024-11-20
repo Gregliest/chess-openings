@@ -1,129 +1,120 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import "./App.css";
+import Engine from "./stockfish/engine";
+const buttonStyle = {
+	cursor: "pointer",
+	padding: "10px 20px",
+	margin: "10px 10px 0px 0px",
+	borderRadius: "6px",
+	backgroundColor: "#f0d9b5",
+	border: "none",
+	boxShadow: "0 2px 5px rgba(0, 0, 0, 0.5)",
+};
+
+const inputStyle = {
+	padding: "10px 20px",
+	margin: "10px 0 10px 0",
+	borderRadius: "6px",
+	border: "none",
+	boxShadow: "0 2px 5px rgba(0, 0, 0, 0.5)",
+	width: "100%",
+};
+
+const boardWrapper = {
+	width: `70vw`,
+	maxWidth: "70vh",
+	margin: "3rem auto",
+};
 
 function App() {
-	const [game, setGame] = useState(new Chess());
-	const [moveHistory, setMoveHistory] = useState<string[]>([]);
-	const [bestMove, setBestMove] = useState<string | null>(null);
-	const [playerColor, setPlayerColor] = useState<"w" | "b">("w");
-
-	// Calculate best move using Stockfish
-	const calculateBestMove = () => {
-		const stockfish = new Worker("stockfish.js");
-
-		stockfish.onmessage = (e) => {
-			const message = e.data;
-			if (message.startsWith("bestmove")) {
-				const move = message.split(" ")[1];
-				makeComputerMove(move);
-				stockfish.terminate();
+	const levels = {
+		"Easy 🤓": 2,
+		"Medium 🧐": 8,
+		"Hard 😵": 18,
+	};
+	const engine = useMemo(() => new Engine(), []);
+	const game = useMemo(() => new Chess(), []);
+	const [gamePosition, setGamePosition] = useState(game.fen());
+	const [stockfishLevel, setStockfishLevel] = useState(2);
+	function findBestMove() {
+		engine.evaluatePosition(game.fen(), stockfishLevel);
+		engine.onMessage(({ bestMove }) => {
+			if (bestMove) {
+				// In latest chess.js versions you can just write ```game.move(bestMove)```
+				game.move({
+					from: bestMove.substring(0, 2),
+					to: bestMove.substring(2, 4),
+					promotion: bestMove.substring(4, 5),
+				});
+				setGamePosition(game.fen());
 			}
-		};
-
-		stockfish.postMessage(`position fen ${game.fen()}`);
-		stockfish.postMessage("go depth 15");
-	};
-
-	// Handle piece movement
-	function makeAMove(sourceSquare: string, targetSquare: string) {
-		if (game.turn() !== playerColor) return false;
-
-		try {
-			const move = game.move({
-				from: sourceSquare,
-				to: targetSquare,
-				promotion: "q", // always promote to queen for simplicity
-			});
-
-			if (move === null) return false; // illegal move
-			setGame(new Chess(game.fen())); // update game state
-			setMoveHistory(game.history());
-
-			// Calculate computer's response
-			calculateBestMove();
-			return true;
-		} catch (error) {
-			return false;
-		}
+		});
 	}
+	function onDrop(sourceSquare, targetSquare, piece) {
+		const move = game.move({
+			from: sourceSquare,
+			to: targetSquare,
+			promotion: piece[1].toLowerCase() ?? "q",
+		});
+		setGamePosition(game.fen());
 
-	// Add this new function to handle computer moves
-	const makeComputerMove = (moveNotation: string) => {
-		const move = game.move(moveNotation);
-		if (move) {
-			setGame(new Chess(game.fen()));
-			setMoveHistory(game.history());
-		}
-	};
+		// illegal move
+		if (move === null) return false;
 
+		// exit if the game is over
+		if (game.isGameOver() || game.isDraw()) return false;
+		findBestMove();
+		return true;
+	}
 	return (
-		<div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-			<div style={{ width: "500px" }}>
-				<div style={{ marginBottom: "10px" }}>
-					<label>
-						Play as:
-						<select
-							value={playerColor}
-							onChange={(e) => setPlayerColor(e.target.value as "w" | "b")}
-							style={{ marginLeft: "10px" }}
-						>
-							<option value="w">White</option>
-							<option value="b">Black</option>
-						</select>
-					</label>
-				</div>
-				<Chessboard
-					position={game.fen()}
-					boardOrientation={playerColor === "w" ? "white" : "black"}
-					onPieceDrop={(sourceSquare, targetSquare) =>
-						makeAMove(sourceSquare, targetSquare)
-					}
-				/>
-			</div>
+		<div style={boardWrapper}>
 			<div
 				style={{
-					width: "200px",
-					border: "1px solid #ccc",
-					padding: "10px",
-					height: "500px",
-					overflowY: "auto",
+					display: "flex",
+					justifyContent: "center",
+					marginBottom: "1rem",
 				}}
 			>
-				<h3>Move History</h3>
-				<div>
-					{moveHistory.map((move, index) => (
-						<div
-							key={`move-${index}`}
-							style={{ cursor: "pointer" }}
-							onClick={() => {
-								const newGame = new Chess();
-								for (let i = 0; i <= index; i++) {
-									newGame.move(moveHistory[i]);
-								}
-								setGame(newGame);
-								setMoveHistory(moveHistory.slice(0, index + 1));
-							}}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") {
-									const newGame = new Chess();
-									for (let i = 0; i <= index; i++) {
-										newGame.move(moveHistory[i]);
-									}
-									setGame(newGame);
-									setMoveHistory(moveHistory.slice(0, index + 1));
-								}
-							}}
-							tabIndex={0}
-							role="button"
-						>
-							{Math.floor(index / 2) + 1}.{" "}
-							{index % 2 === 0 ? move : `... ${move}`}
-						</div>
-					))}
-				</div>
+				{Object.entries(levels).map(([level, depth]) => (
+					<button
+						style={{
+							...buttonStyle,
+							backgroundColor: depth === stockfishLevel ? "#B58863" : "#f0d9b5",
+						}}
+						onClick={() => setStockfishLevel(depth)}
+					>
+						{level}
+					</button>
+				))}
 			</div>
+
+			<Chessboard
+				id="PlayVsStockfish"
+				position={gamePosition}
+				onPieceDrop={onDrop}
+			/>
+
+			<button
+				style={buttonStyle}
+				onClick={() => {
+					game.reset();
+					setGamePosition(game.fen());
+				}}
+			>
+				New game
+			</button>
+			<button
+				style={buttonStyle}
+				onClick={() => {
+					game.undo();
+					game.undo();
+					setGamePosition(game.fen());
+				}}
+			>
+				Undo
+			</button>
 		</div>
 	);
 }
