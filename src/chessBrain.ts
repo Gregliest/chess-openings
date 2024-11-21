@@ -1,9 +1,12 @@
 import type Engine from "./stockfish/engine";
 
-async function getOpeningFromLichess(fen: string) {
+const ENDPOINT = "https://explorer.lichess.ovh/lichess";
+async function getOpeningFromLichess(fen: string, rating?: number) {
+	console.log("getOpeningFromLichess", fen, rating);
 	try {
+		const ratingParam = rating ? `&ratings=${rating}` : "";
 		const response = await fetch(
-			`https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}`,
+			`${ENDPOINT}?fen=${encodeURIComponent(fen)}${ratingParam}`,
 		);
 		const data = await response.json();
 		return data.opening || { name: "Unknown Opening" };
@@ -13,12 +16,15 @@ async function getOpeningFromLichess(fen: string) {
 	}
 }
 
-async function getPossibleContinuations(fen: string) {
+async function getPossibleContinuations(fen: string, rating?: number) {
+	console.log("getPossibleContinuations", fen, rating);
 	try {
+		const ratingParam = rating ? `&ratings=${rating}` : "";
 		const response = await fetch(
-			`https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}`,
+			`${ENDPOINT}?fen=${encodeURIComponent(fen)}${ratingParam}`,
 		);
 		const data = await response.json();
+		console.log("getPossibleContinuations data", data);
 		return data.moves || [];
 	} catch (error) {
 		console.error("Error fetching continuations:", error);

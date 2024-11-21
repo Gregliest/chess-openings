@@ -28,16 +28,12 @@ const boardWrapper = {
 };
 
 function App() {
-	const levels = {
-		"Easy 🤓": 2,
-		"Medium 🧐": 8,
-		"Hard 😵": 18,
-	};
+	const ratingRanges = [0, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2500];
 
 	const engine = useMemo(() => new Engine(), []);
 	const game = useMemo(() => new Chess(), []);
 	const [gamePosition, setGamePosition] = useState(game.fen());
-	const [stockfishLevel, setStockfishLevel] = useState(2);
+	const [selectedRating, setSelectedRating] = useState(1400);
 	const [evaluation, setEvaluation] = useState<number>(0);
 
 	function onDrop(
@@ -80,20 +76,26 @@ function App() {
 								marginBottom: "1rem",
 							}}
 						>
-							{Object.entries(levels).map(([level, depth]) => (
-								<button
-									key={level}
-									type="button"
-									style={{
-										...buttonStyle,
-										backgroundColor:
-											depth === stockfishLevel ? "#B58863" : "#f0d9b5",
-									}}
-									onClick={() => setStockfishLevel(depth)}
-								>
-									{level}
-								</button>
-							))}
+							<select
+								value={selectedRating}
+								onChange={(e) => setSelectedRating(Number(e.target.value))}
+								style={{
+									...buttonStyle,
+									width: "200px",
+									backgroundColor: "#B58863",
+									color: "white",
+								}}
+							>
+								{ratingRanges.map((rating, index) => (
+									<option key={rating} value={rating}>
+										{rating === 0
+											? "Beginner (0-999)"
+											: rating === 2500
+												? `Master (${rating}+)`
+												: `${rating}-${ratingRanges[index + 1] - 1}`}
+									</option>
+								))}
+							</select>
 						</div>
 
 						<Chessboard
@@ -107,7 +109,7 @@ function App() {
 				<MoveHistory game={game} onNewGame={handleNewGame} />
 			</div>
 
-			<BookMoves fen={gamePosition} />
+			<BookMoves fen={gamePosition} rating={selectedRating} />
 		</div>
 	);
 }
