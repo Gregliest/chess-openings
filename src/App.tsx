@@ -62,7 +62,7 @@ function App() {
 			return data.opening || { name: "Unknown Opening" };
 		} catch (error) {
 			console.error("Error fetching opening:", error);
-			return { name: "Unknown Opening" };
+			return { name: "Error fetching opening" };
 		}
 	}
 
@@ -79,7 +79,7 @@ function App() {
 		}
 	}
 
-	function findBestMove() {
+	function findbestmove() {
 		engine.evaluatePosition(game.fen(), stockfishLevel);
 		engine.onMessage(({ bestMove, positionEvaluation }) => {
 			if (positionEvaluation) {
@@ -118,7 +118,7 @@ function App() {
 		getOpeningFromLichess(game.fen()).then(setCurrentOpening);
 		getPossibleContinuations(game.fen()).then(setContinuations);
 
-		findBestMove();
+		// findbestmove();
 		return true;
 	}
 	function goToPosition(moveIndex: number) {
@@ -246,10 +246,6 @@ function App() {
 								style={{
 									cursor: "pointer",
 									padding: "4px",
-									backgroundColor:
-										index === moveHistory.length - 1
-											? "#f0d9b5"
-											: "transparent",
 									borderRadius: "4px",
 								}}
 								onClick={() => goToPosition(index)}
