@@ -28,6 +28,13 @@ interface OpeningInfo {
 	name?: string;
 }
 
+interface Continuation {
+	san: string;
+	white: number;
+	draws: number;
+	black: number;
+}
+
 function App() {
 	const levels = {
 		"Easy 🤓": 2,
@@ -43,7 +50,8 @@ function App() {
 	const [currentOpening, setCurrentOpening] = useState<OpeningInfo>({
 		name: "Starting Position",
 	});
-	const [possibleMoves, setPossibleMoves] = useState<any[]>([]);
+	const [evaluation, setEvaluation] = useState<number>(0);
+	const [continuations, setContinuations] = useState<Continuation[]>([]);
 
 	async function getOpeningFromLichess(fen: string) {
 		try {
@@ -73,7 +81,10 @@ function App() {
 
 	function findBestMove() {
 		engine.evaluatePosition(game.fen(), stockfishLevel);
-		engine.onMessage(({ bestMove }) => {
+		engine.onMessage(({ bestMove, positionEvaluation }) => {
+			if (positionEvaluation) {
+				setEvaluation(Number.parseInt(positionEvaluation) / 100);
+			}
 			if (bestMove) {
 				game.move({
 					from: bestMove.substring(0, 2),
@@ -105,7 +116,7 @@ function App() {
 		setMoveHistory(newHistory);
 
 		getOpeningFromLichess(game.fen()).then(setCurrentOpening);
-		getPossibleContinuations(game.fen()).then(setPossibleMoves);
+		getPossibleContinuations(game.fen()).then(setContinuations);
 
 		findBestMove();
 		return true;
@@ -121,116 +132,176 @@ function App() {
 		setMoveHistory(newHistory);
 
 		getOpeningFromLichess(game.fen()).then(setCurrentOpening);
-		getPossibleContinuations(game.fen()).then(setPossibleMoves);
+		getPossibleContinuations(game.fen()).then(setContinuations);
 	}
 
 	return (
 		<div style={boardWrapper}>
-			<div>
+			<div style={{ display: "flex", gap: "1rem" }}>
 				<div
 					style={{
-						display: "flex",
-						justifyContent: "center",
-						marginBottom: "1rem",
+						width: "30px",
+						height: "400px",
+						backgroundColor: "#eee",
+						marginTop: "72px",
+						position: "relative",
 					}}
 				>
-					{Object.entries(levels).map(([level, depth]) => (
-						<button
-							key={level}
-							type="button"
-							style={{
-								...buttonStyle,
-								backgroundColor:
-									depth === stockfishLevel ? "#B58863" : "#f0d9b5",
-							}}
-							onClick={() => setStockfishLevel(depth)}
-						>
-							{level}
-						</button>
-					))}
+					<span
+						style={{
+							position: "absolute",
+							left: "50%",
+							top: "-25px",
+							transform: "translateX(-50%)",
+							color: "#000",
+							whiteSpace: "nowrap",
+						}}
+					>
+						{evaluation > 0 ? "+" : ""}
+						{evaluation.toFixed(1)}
+					</span>
+					<div
+						style={{
+							width: "100%",
+							height: `${50 - (evaluation * 50) / 10}%`,
+							backgroundColor: "#B58863",
+							transition: "height 0.3s ease",
+						}}
+					/>
 				</div>
 
-				<div
-					style={{
-						textAlign: "center",
-						marginBottom: "1rem",
-						fontSize: "1.2rem",
-						fontWeight: "bold",
-					}}
-				>
-					{currentOpening.eco && `${currentOpening.eco}: `}
-					{currentOpening.name}
+				<div>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "center",
+							marginBottom: "1rem",
+						}}
+					>
+						{Object.entries(levels).map(([level, depth]) => (
+							<button
+								key={level}
+								type="button"
+								style={{
+									...buttonStyle,
+									backgroundColor:
+										depth === stockfishLevel ? "#B58863" : "#f0d9b5",
+								}}
+								onClick={() => setStockfishLevel(depth)}
+							>
+								{level}
+							</button>
+						))}
+					</div>
+
+					<div
+						style={{
+							textAlign: "center",
+							marginBottom: "1rem",
+							fontSize: "1.2rem",
+							fontWeight: "bold",
+						}}
+					>
+						{currentOpening.eco && `${currentOpening.eco}: `}
+						{currentOpening.name}
+					</div>
+
+					<Chessboard
+						id="PlayVsStockfish"
+						position={gamePosition}
+						onPieceDrop={onDrop}
+					/>
+
+					<button
+						type="button"
+						style={buttonStyle}
+						onClick={() => {
+							game.reset();
+							setGamePosition(game.fen());
+							setMoveHistory([]);
+							setContinuations([]);
+						}}
+					>
+						New game
+					</button>
 				</div>
-
-				<Chessboard
-					id="PlayVsStockfish"
-					position={gamePosition}
-					onPieceDrop={onDrop}
-				/>
-
-				<button
-					type="button"
-					style={buttonStyle}
-					onClick={() => {
-						game.reset();
-						setGamePosition(game.fen());
-						setMoveHistory([]);
-					}}
-				>
-					New game
-				</button>
 			</div>
 
-			<div
-				style={{
-					width: "200px",
-					border: "1px solid #ccc",
-					borderRadius: "6px",
-					padding: "10px",
-					height: "500px",
-					overflowY: "auto",
-				}}
-			>
-				<h3>Move History</h3>
-				<div>
-					{moveHistory.map((move, index) => (
-						<div
-							key={`move-${index}`}
-							style={{
-								cursor: "pointer",
-								padding: "4px",
-								backgroundColor:
-									index === moveHistory.length - 1 ? "#f0d9b5" : "transparent",
-								borderRadius: "4px",
-							}}
-							onClick={() => goToPosition(index)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") {
-									goToPosition(index);
-								}
-							}}
-							tabIndex={0}
-							role="button"
-						>
-							{Math.floor(index / 2) + 1}.{" "}
-							{index % 2 === 0 ? move : `... ${move}`}
-						</div>
-					))}
+			<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+				<div
+					style={{
+						width: "200px",
+						border: "1px solid #ccc",
+						borderRadius: "6px",
+						padding: "10px",
+						height: "250px",
+						overflowY: "auto",
+					}}
+				>
+					<h3>Move History</h3>
+					<div>
+						{moveHistory.map((move, index) => (
+							<div
+								key={`${move}-${index}`}
+								style={{
+									cursor: "pointer",
+									padding: "4px",
+									backgroundColor:
+										index === moveHistory.length - 1
+											? "#f0d9b5"
+											: "transparent",
+									borderRadius: "4px",
+								}}
+								onClick={() => goToPosition(index)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										goToPosition(index);
+									}
+								}}
+								tabIndex={0}
+								role="button"
+							>
+								{Math.floor(index / 2) + 1}.{" "}
+								{index % 2 === 0 ? move : `... ${move}`}
+							</div>
+						))}
+					</div>
 				</div>
 
-				<h3>Possible Continuations</h3>
-				<div>
-					{possibleMoves.map((move, index) => (
-						<div
-							key={`continuation-${index}`}
-							style={{
-								padding: "4px",
-								borderRadius: "4px",
-							}}
-						>
-							{move.san} ({move.white + move.draws + move.black} games)
-						</div>
-					))}
+				<div
+					style={{
+						width: "200px",
+						border: "1px solid #ccc",
+						borderRadius: "6px",
+						padding: "10px",
+						height: "220px",
+						overflowY: "auto",
+					}}
+				>
+					<h3>Book Moves</h3>
+					<div>
+						{continuations.map((cont) => (
+							<div
+								key={cont.san}
+								style={{
+									padding: "4px",
+									borderRadius: "4px",
+									fontSize: "0.9rem",
+								}}
+							>
+								{cont.san} (
+								{Math.round(
+									((cont.white + cont.black + cont.draws) /
+										continuations.reduce(
+											(sum, c) => sum + c.white + c.black + c.draws,
+											0,
+										)) *
+										100,
+								)}
+								%)
+							</div>
+						))}
+					</div>
 				</div>
 			</div>
 		</div>
