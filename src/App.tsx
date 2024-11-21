@@ -3,6 +3,12 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import "./App.css";
 import Engine from "./stockfish/engine";
+import EvalBar from "./EvalBar";
+import {
+	getOpeningFromLichess,
+	getPossibleContinuations,
+	evaluatePosition,
+} from "./chessBrain";
 
 const buttonStyle = {
 	cursor: "pointer",
@@ -53,50 +59,6 @@ function App() {
 	const [evaluation, setEvaluation] = useState<number>(0);
 	const [continuations, setContinuations] = useState<Continuation[]>([]);
 
-	async function getOpeningFromLichess(fen: string) {
-		try {
-			const response = await fetch(
-				`https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}`,
-			);
-			const data = await response.json();
-			return data.opening || { name: "Unknown Opening" };
-		} catch (error) {
-			console.error("Error fetching opening:", error);
-			return { name: "Error fetching opening" };
-		}
-	}
-
-	async function getPossibleContinuations(fen: string) {
-		try {
-			const response = await fetch(
-				`https://explorer.lichess.ovh/masters?fen=${encodeURIComponent(fen)}`,
-			);
-			const data = await response.json();
-			return data.moves || [];
-		} catch (error) {
-			console.error("Error fetching continuations:", error);
-			return [];
-		}
-	}
-
-	function findbestmove() {
-		engine.evaluatePosition(game.fen(), stockfishLevel);
-		engine.onMessage(({ bestMove, positionEvaluation }) => {
-			if (positionEvaluation) {
-				setEvaluation(Number.parseInt(positionEvaluation) / 100);
-			}
-			if (bestMove) {
-				game.move({
-					from: bestMove.substring(0, 2),
-					to: bestMove.substring(2, 4),
-					promotion: bestMove.substring(4, 5),
-				});
-				setGamePosition(game.fen());
-				setMoveHistory(game.history());
-			}
-		});
-	}
-
 	function onDrop(
 		sourceSquare: string,
 		targetSquare: string,
@@ -117,58 +79,16 @@ function App() {
 
 		getOpeningFromLichess(game.fen()).then(setCurrentOpening);
 		getPossibleContinuations(game.fen()).then(setContinuations);
+		evaluatePosition(engine, game.fen()).then(setEvaluation);
 
 		// findbestmove();
 		return true;
-	}
-	function goToPosition(moveIndex: number) {
-		const newGame = new Chess();
-		for (let i = 0; i <= moveIndex; i++) {
-			newGame.move(moveHistory[i]);
-		}
-		game.load(newGame.fen());
-		setGamePosition(game.fen());
-		const newHistory = moveHistory.slice(0, moveIndex + 1);
-		setMoveHistory(newHistory);
-
-		getOpeningFromLichess(game.fen()).then(setCurrentOpening);
-		getPossibleContinuations(game.fen()).then(setContinuations);
 	}
 
 	return (
 		<div style={boardWrapper}>
 			<div style={{ display: "flex", gap: "1rem" }}>
-				<div
-					style={{
-						width: "30px",
-						height: "400px",
-						backgroundColor: "#eee",
-						marginTop: "72px",
-						position: "relative",
-					}}
-				>
-					<span
-						style={{
-							position: "absolute",
-							left: "50%",
-							top: "-25px",
-							transform: "translateX(-50%)",
-							color: "#000",
-							whiteSpace: "nowrap",
-						}}
-					>
-						{evaluation > 0 ? "+" : ""}
-						{evaluation.toFixed(1)}
-					</span>
-					<div
-						style={{
-							width: "100%",
-							height: `${50 - (evaluation * 50) / 10}%`,
-							backgroundColor: "#B58863",
-							transition: "height 0.3s ease",
-						}}
-					/>
-				</div>
+				<EvalBar evaluation={evaluation} />
 
 				<div>
 					<div
@@ -244,18 +164,9 @@ function App() {
 							<div
 								key={`${move}-${index}`}
 								style={{
-									cursor: "pointer",
 									padding: "4px",
 									borderRadius: "4px",
 								}}
-								onClick={() => goToPosition(index)}
-								onKeyDown={(e) => {
-									if (e.key === "Enter" || e.key === " ") {
-										goToPosition(index);
-									}
-								}}
-								tabIndex={0}
-								role="button"
 							>
 								{Math.floor(index / 2) + 1}.{" "}
 								{index % 2 === 0 ? move : `... ${move}`}
