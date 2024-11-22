@@ -20,14 +20,14 @@ function MoveHistory({
 			<button type="button" style={buttonStyle} onClick={onNewGame}>
 				New game
 			</button>
-
 			<div
 				style={{
 					width: "200px",
 					border: "1px solid #ccc",
 					borderRadius: "6px",
 					padding: "10px",
-					height: "250px",
+					height: "100%",
+					flex: 1,
 					overflowY: "auto",
 				}}
 			>

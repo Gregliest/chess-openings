@@ -39,13 +39,13 @@ function BookMoves({ fen, rating }: BookMovesProps) {
 	};
 
 	return (
-		<div>
-			<h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
+		<div style={{ textAlign: "left" }}>
+			<h2 style={{ marginBottom: "1rem" }}>
 				{opening.eco && `${opening.eco}: `}
 				{opening.name}
 			</h2>
 
-			<div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+			<div style={{ display: "flex", gap: "1rem" }}>
 				<div style={infoBoxStyle}>
 					<h3>Book Moves</h3>
 					<div>

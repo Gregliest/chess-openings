@@ -20,8 +20,6 @@ const buttonStyle = {
 };
 
 const boardWrapper = {
-	width: "70vw",
-	maxWidth: "70vh",
 	margin: "3rem auto",
 	display: "flex",
 	gap: "2rem",
@@ -98,15 +96,19 @@ function App() {
 							</select>
 						</div>
 
-						<Chessboard
-							id="PlayVsStockfish"
-							position={gamePosition}
-							onPieceDrop={onDrop}
-						/>
+						<div style={{ height: "60vh", width: "60vh" }}>
+							<Chessboard
+								id="PlayVsStockfish"
+								position={gamePosition}
+								onPieceDrop={onDrop}
+							/>
+						</div>
 					</div>
 				</div>
 
-				<MoveHistory game={game} onNewGame={handleNewGame} />
+				<div style={{ height: "66vh" }}>
+					<MoveHistory game={game} onNewGame={handleNewGame} />
+				</div>
 			</div>
 
 			<BookMoves fen={gamePosition} rating={selectedRating} />
