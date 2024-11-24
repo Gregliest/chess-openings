@@ -111,7 +111,7 @@ function App() {
 				</div>
 			</div>
 
-			<BookMoves fen={gamePosition} rating={selectedRating} />
+			<BookMoves fen={gamePosition} rating={selectedRating} engine={engine} />
 		</div>
 	);
 }

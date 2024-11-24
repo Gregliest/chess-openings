@@ -7,6 +7,7 @@ export interface Continuation {
 	draws: number;
 	black: number;
 	fen?: string;
+	trapEval?: number;
 	opening?: {
 		eco?: string;
 		name?: string;
@@ -74,6 +75,7 @@ function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 	return new Promise((resolve) => {
 		engine.evaluatePosition(fen);
 		engine.onMessage(({ positionEvaluation }) => {
+			console.log("positionEvaluation", positionEvaluation);
 			if (positionEvaluation) {
 				resolve(Number.parseInt(positionEvaluation) / 100);
 			}
@@ -81,4 +83,36 @@ function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 	});
 }
 
-export { getOpeningFromLichess, getPossibleContinuations, evaluatePosition };
+async function getTraps(
+	engine: Engine,
+	fen: string,
+	continuations: Continuation[],
+): Promise<Continuation[]> {
+	const traps: Continuation[] = [];
+
+	const initialEval = await evaluatePosition(engine, fen);
+
+	for (const continuation of continuations) {
+		if (!continuation.fen) continue;
+
+		const newEval = await evaluatePosition(engine, continuation.fen);
+
+		// If eval changes by more than 2 points, it's a trap
+		if (Math.abs(newEval - initialEval) > 2) {
+			traps.push({
+				...continuation,
+				trapEval: newEval,
+			});
+			break;
+		}
+	}
+
+	return traps;
+}
+
+export {
+	getOpeningFromLichess,
+	getPossibleContinuations,
+	evaluatePosition,
+	getTraps,
+};
