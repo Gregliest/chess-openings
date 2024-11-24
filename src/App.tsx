@@ -60,6 +60,11 @@ function App() {
 		setGamePosition(game.fen());
 	};
 
+	const handleUndo = () => {
+		game.undo();
+		setGamePosition(game.fen());
+	};
+
 	return (
 		<div>
 			<div style={boardWrapper}>
@@ -107,7 +112,11 @@ function App() {
 				</div>
 
 				<div style={{ height: "66vh" }}>
-					<MoveHistory game={game} onNewGame={handleNewGame} />
+					<MoveHistory
+						game={game}
+						onNewGame={handleNewGame}
+						onUndo={handleUndo}
+					/>
 				</div>
 			</div>
 

@@ -14,7 +14,18 @@ const buttonStyle = {
 function MoveHistory({
 	game,
 	onNewGame,
-}: { game: Chess; onNewGame: () => void }) {
+	onUndo,
+}: {
+	game: Chess;
+	onNewGame: () => void;
+	onUndo: () => void;
+}) {
+	const handleUndo = () => {
+		if (onUndo) {
+			onUndo();
+		}
+	};
+
 	return (
 		<div
 			style={{
@@ -63,6 +74,14 @@ function MoveHistory({
 					}, [])}
 				</div>
 			</div>
+			<button
+				type="button"
+				style={buttonStyle}
+				onClick={handleUndo}
+				disabled={game.history().length === 0}
+			>
+				Undo last move
+			</button>
 		</div>
 	);
 }

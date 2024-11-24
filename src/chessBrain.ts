@@ -75,7 +75,6 @@ function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 	return new Promise((resolve) => {
 		engine.evaluatePosition(fen);
 		engine.onMessage(({ positionEvaluation }) => {
-			console.log("positionEvaluation", positionEvaluation);
 			if (positionEvaluation) {
 				resolve(Number.parseInt(positionEvaluation) / 100);
 			}
@@ -91,6 +90,7 @@ async function getTraps(
 	const traps: Continuation[] = [];
 
 	const initialEval = await evaluatePosition(engine, fen);
+	console.log("initialEval", initialEval);
 
 	for (const continuation of continuations) {
 		if (!continuation.fen) continue;
@@ -99,6 +99,7 @@ async function getTraps(
 
 		// If eval changes by more than 2 points, it's a trap
 		if (Math.abs(newEval - initialEval) > 2) {
+			console.log("trap", continuation.san, newEval);
 			traps.push({
 				...continuation,
 				trapEval: newEval,
