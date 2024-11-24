@@ -1,4 +1,17 @@
+import { Chess } from "chess.js";
 import type Engine from "./stockfish/engine";
+
+export interface Continuation {
+	san: string;
+	white: number;
+	draws: number;
+	black: number;
+	fen?: string;
+	opening?: {
+		eco?: string;
+		name?: string;
+	};
+}
 
 const ENDPOINT = "https://explorer.lichess.ovh/lichess";
 async function getOpeningFromLichess(fen: string, rating?: number) {
@@ -15,8 +28,10 @@ async function getOpeningFromLichess(fen: string, rating?: number) {
 		return { name: "Error fetching opening" };
 	}
 }
-
-async function getPossibleContinuations(fen: string, rating?: number) {
+async function getPossibleContinuations(
+	fen: string,
+	rating?: number,
+): Promise<Continuation[]> {
 	console.log("getPossibleContinuations", fen, rating);
 	try {
 		const ratingParam = rating ? `&ratings=${rating}` : "";
@@ -24,14 +39,37 @@ async function getPossibleContinuations(fen: string, rating?: number) {
 			`${ENDPOINT}?fen=${encodeURIComponent(fen)}${ratingParam}`,
 		);
 		const data = await response.json();
-		console.log("getPossibleContinuations data", data);
-		return data.moves || [];
+
+		// Get the moves and add opening info if available
+		const moves = data.moves || [];
+		const movesWithOpenings = await Promise.all(
+			moves.map(async (move: Continuation) => {
+				if (!move.fen) {
+					// Create a new chess instance with the current position
+					const chess = new Chess(fen);
+					// Make the move
+					chess.move(move.san);
+					// Add the calculated fen to the move
+					move.fen = chess.fen();
+				}
+
+				// Get opening info for each continuation
+				const openingInfo = await getOpeningFromLichess(move.fen, rating);
+				console.log("openingInfo", openingInfo);
+				return {
+					...move,
+					opening: openingInfo,
+				};
+			}),
+		);
+		console.log("movesWithOpenings", movesWithOpenings);
+
+		return movesWithOpenings;
 	} catch (error) {
 		console.error("Error fetching continuations:", error);
 		return [];
 	}
 }
-
 function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 	return new Promise((resolve) => {
 		engine.evaluatePosition(fen);

@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
+import type { Continuation } from "./chessBrain";
 import { getOpeningFromLichess, getPossibleContinuations } from "./chessBrain";
 
 interface OpeningInfo {
 	eco?: string;
 	name?: string;
-}
-
-interface Continuation {
-	san: string;
-	white: number;
-	draws: number;
-	black: number;
 }
 
 interface BookMovesProps {
@@ -44,7 +38,6 @@ function BookMoves({ fen, rating }: BookMovesProps) {
 				{opening.eco && `${opening.eco}: `}
 				{opening.name}
 			</h2>
-
 			<div style={{ display: "flex", gap: "1rem" }}>
 				<div style={infoBoxStyle}>
 					<h3>Book Moves</h3>
@@ -58,6 +51,11 @@ function BookMoves({ fen, rating }: BookMovesProps) {
 									fontSize: "0.9rem",
 								}}
 							>
+								{cont.opening?.name && (
+									<div style={{ fontSize: "0.8rem", color: "#666" }}>
+										{cont.opening.name}
+									</div>
+								)}
 								{cont.san} (
 								{Math.round(
 									((cont.white + cont.black + cont.draws) /

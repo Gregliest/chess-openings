@@ -16,7 +16,14 @@ function MoveHistory({
 	onNewGame,
 }: { game: Chess; onNewGame: () => void }) {
 	return (
-		<div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				gap: "1rem",
+				height: "100%",
+			}}
+		>
 			<button type="button" style={buttonStyle} onClick={onNewGame}>
 				New game
 			</button>
@@ -28,7 +35,7 @@ function MoveHistory({
 					padding: "10px",
 					height: "100%",
 					flex: 1,
-					overflowY: "auto",
+					overflowY: "auto" as const,
 				}}
 			>
 				<h3>Move History</h3>
