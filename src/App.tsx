@@ -49,7 +49,11 @@ function App() {
 		if (move === null) return false;
 		if (game.isGameOver() || game.isDraw()) return false;
 
-		evaluatePosition(engine, game.fen()).then(setEvaluation);
+		evaluatePosition(engine, game.fen()).then((gameEval) => {
+			console.log("fen", game.fen());
+			console.log("Position evaluation:", gameEval);
+			setEvaluation(gameEval);
+		});
 
 		// findbestmove();
 		return true;

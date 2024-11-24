@@ -73,10 +73,17 @@ async function getPossibleContinuations(
 }
 function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 	return new Promise((resolve) => {
+		let isFinished = false;
+		let finalEval = 0;
+
 		engine.evaluatePosition(fen);
-		engine.onMessage(({ positionEvaluation }) => {
-			if (positionEvaluation) {
-				resolve(Number.parseInt(positionEvaluation) / 100);
+		engine.onMessage(({ positionEvaluation, bestMove }) => {
+			if (positionEvaluation && !isFinished) {
+				finalEval = Number.parseInt(positionEvaluation) / 100;
+			}
+			if (bestMove) {
+				isFinished = true;
+				resolve(finalEval);
 			}
 		});
 	});
@@ -99,6 +106,7 @@ async function getTraps(
 
 		// If eval changes by more than 2 points, it's a trap
 		if (Math.abs(newEval - initialEval) > 2) {
+			console.log("fen", continuation.fen);
 			console.log("trap", continuation.san, newEval);
 			traps.push({
 				...continuation,

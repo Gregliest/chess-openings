@@ -3,7 +3,6 @@ import type { Continuation } from "./chessBrain";
 import {
 	getOpeningFromLichess,
 	getPossibleContinuations,
-	evaluatePosition,
 	getTraps,
 } from "./chessBrain";
 import type Engine from "./stockfish/engine";
