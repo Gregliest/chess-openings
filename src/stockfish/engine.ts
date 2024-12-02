@@ -7,7 +7,7 @@
  * Description of the universal chess interface (UCI)  https://gist.github.com/aliostad/f4470274f39d29b788c1b09519e67372/
  */
 
-const stockfish = new Worker("./stockfish.wasm.js");
+const stockfish = new Worker('./stockfish.wasm.js');
 
 type EngineMessage = {
 	/** stockfish engine message in UCI format*/
@@ -35,7 +35,7 @@ export default class Engine {
 		this.stockfish = stockfish;
 		this.isReady = false;
 		this.onMessage = (callback) => {
-			this.stockfish.addEventListener("message", (e) => {
+			this.stockfish.addEventListener('message', (e) => {
 				callback(this.transformSFMessageData(e));
 			});
 		};
@@ -57,10 +57,10 @@ export default class Engine {
 	}
 
 	init() {
-		this.stockfish.postMessage("uci");
-		this.stockfish.postMessage("isready");
+		this.stockfish.postMessage('uci');
+		this.stockfish.postMessage('isready');
 		this.onMessage(({ uciMessage }) => {
-			if (uciMessage === "readyok") {
+			if (uciMessage === 'readyok') {
 				this.isReady = true;
 			}
 		});
@@ -68,7 +68,7 @@ export default class Engine {
 
 	onReady(callback: () => void) {
 		this.onMessage(({ uciMessage }) => {
-			if (uciMessage === "readyok") {
+			if (uciMessage === 'readyok') {
 				callback();
 			}
 		});
@@ -81,11 +81,11 @@ export default class Engine {
 	}
 
 	stop() {
-		this.stockfish.postMessage("stop"); // Run when searching takes too long time and stockfish will return you the bestmove of the deep it has reached
+		this.stockfish.postMessage('stop'); // Run when searching takes too long time and stockfish will return you the bestmove of the deep it has reached
 	}
 
 	terminate() {
 		this.isReady = false;
-		this.stockfish.postMessage("quit"); // Run this before chessboard unmounting.
+		this.stockfish.postMessage('quit'); // Run this before chessboard unmounting.
 	}
 }

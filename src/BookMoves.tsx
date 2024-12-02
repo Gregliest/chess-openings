@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import type { Continuation } from "./chessBrain";
+import { useState, useEffect } from 'react';
+import type { Continuation } from './chessBrain';
 import {
 	getOpeningFromLichess,
 	getPossibleContinuations,
 	getTraps,
-} from "./chessBrain";
-import type Engine from "./stockfish/engine";
+} from './chessBrain';
+import type Engine from './stockfish/engine';
 
 interface OpeningInfo {
 	eco?: string;
@@ -20,7 +20,7 @@ interface BookMovesProps {
 
 function BookMoves({ fen, rating, engine }: BookMovesProps) {
 	const [opening, setOpening] = useState<OpeningInfo>({
-		name: "Starting Position",
+		name: 'Starting Position',
 	});
 	const [continuations, setContinuations] = useState<Continuation[]>([]);
 	const [traps, setTraps] = useState<Continuation[]>([]);
@@ -44,26 +44,26 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 	}, [fen, rating, engine]);
 
 	const infoBoxStyle = {
-		width: "200px",
-		border: "1px solid #ccc",
-		borderRadius: "6px",
-		padding: "10px",
-		height: "220px",
-		overflowY: "auto" as const,
+		width: '200px',
+		border: '1px solid #ccc',
+		borderRadius: '6px',
+		padding: '10px',
+		height: '220px',
+		overflowY: 'auto' as const,
 	};
 
 	return (
-		<div style={{ textAlign: "left" }}>
-			<h2 style={{ marginBottom: "1rem" }}>
+		<div style={{ textAlign: 'left' }}>
+			<h2 style={{ marginBottom: '1rem' }}>
 				{opening.eco && `${opening.eco}: `}
 				{opening.name}
 			</h2>
-			<div style={{ display: "flex", gap: "1rem" }}>
+			<div style={{ display: 'flex', gap: '1rem' }}>
 				<div style={infoBoxStyle}>
 					<h3>Book Moves</h3>
 					<div>
 						{isLoadingContinuations ? (
-							<div style={{ color: "#666", fontStyle: "italic" }}>
+							<div style={{ color: '#666', fontStyle: 'italic' }}>
 								Loading moves...
 							</div>
 						) : (
@@ -71,13 +71,13 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 								<div
 									key={cont.san}
 									style={{
-										padding: "4px",
-										borderRadius: "4px",
-										fontSize: "0.9rem",
+										padding: '4px',
+										borderRadius: '4px',
+										fontSize: '0.9rem',
 									}}
 								>
 									{cont.opening?.name && (
-										<div style={{ fontSize: "0.8rem", color: "#666" }}>
+										<div style={{ fontSize: '0.8rem', color: '#666' }}>
 											{cont.opening.name}
 										</div>
 									)}
@@ -101,11 +101,11 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 					<h3>Opening Traps</h3>
 					<div>
 						{isLoadingTraps ? (
-							<div style={{ color: "#666", fontStyle: "italic" }}>
+							<div style={{ color: '#666', fontStyle: 'italic' }}>
 								Analyzing traps...
 							</div>
 						) : traps.length === 0 ? (
-							<div style={{ color: "#666", fontStyle: "italic" }}>
+							<div style={{ color: '#666', fontStyle: 'italic' }}>
 								No traps found
 							</div>
 						) : (
@@ -113,13 +113,13 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 								<div
 									key={trap.san}
 									style={{
-										padding: "4px",
-										borderRadius: "4px",
-										fontSize: "0.9rem",
+										padding: '4px',
+										borderRadius: '4px',
+										fontSize: '0.9rem',
 										color:
 											trap.trapEval && trap.trapEval < 0
-												? "#d32f2f"
-												: "#388e3c",
+												? '#d32f2f'
+												: '#388e3c',
 									}}
 								>
 									{trap.san} ({trap.trapEval?.toFixed(1)})

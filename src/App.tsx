@@ -1,28 +1,28 @@
-import { useMemo, useState } from "react";
-import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
-import "./App.css";
-import Engine from "./stockfish/engine";
-import EvalBar from "./EvalBar";
-import { evaluatePosition, evaluatePositionWithStockfish } from "./chessBrain";
-import MoveHistory from "./MoveHistory";
-import BookMoves from "./BookMoves";
+import { useMemo, useState } from 'react';
+import { Chess } from 'chess.js';
+import { Chessboard } from 'react-chessboard';
+import './App.css';
+import Engine from './stockfish/engine';
+import EvalBar from './EvalBar';
+import { evaluatePosition } from './chessBrain';
+import MoveHistory from './MoveHistory';
+import BookMoves from './BookMoves';
 
 const buttonStyle = {
-	cursor: "pointer",
-	padding: "10px 20px",
-	margin: "10px 10px 0px 0px",
-	borderRadius: "6px",
-	backgroundColor: "#f0d9b5",
-	border: "none",
-	boxShadow: "0 2px 5px rgba(0, 0, 0, 0.5)",
-	color: "#000000",
+	cursor: 'pointer',
+	padding: '10px 20px',
+	margin: '10px 10px 0px 0px',
+	borderRadius: '6px',
+	backgroundColor: '#f0d9b5',
+	border: 'none',
+	boxShadow: '0 2px 5px rgba(0, 0, 0, 0.5)',
+	color: '#000000',
 };
 
 const boardWrapper = {
-	margin: "3rem auto",
-	display: "flex",
-	gap: "2rem",
+	margin: '3rem auto',
+	display: 'flex',
+	gap: '2rem',
 };
 
 function App() {
@@ -42,7 +42,7 @@ function App() {
 		const move = game.move({
 			from: sourceSquare,
 			to: targetSquare,
-			promotion: piece[1].toLowerCase() ?? "q",
+			promotion: piece[1].toLowerCase() ?? 'q',
 		});
 		setGamePosition(game.fen());
 
@@ -50,7 +50,7 @@ function App() {
 		if (game.isGameOver() || game.isDraw()) return false;
 
 		evaluatePosition(engine, game.fen()).then((gameEval) => {
-			console.log("Position evaluation:", gameEval);
+			console.log('Position evaluation:', gameEval);
 			setEvaluation(gameEval);
 		});
 
@@ -70,15 +70,15 @@ function App() {
 	return (
 		<div>
 			<div style={boardWrapper}>
-				<div style={{ display: "flex", gap: "1rem" }}>
+				<div style={{ display: 'flex', gap: '1rem' }}>
 					<EvalBar evaluation={evaluation} />
 
 					<div>
 						<div
 							style={{
-								display: "flex",
-								justifyContent: "center",
-								marginBottom: "1rem",
+								display: 'flex',
+								justifyContent: 'center',
+								marginBottom: '1rem',
 							}}
 						>
 							<select
@@ -86,15 +86,15 @@ function App() {
 								onChange={(e) => setSelectedRating(Number(e.target.value))}
 								style={{
 									...buttonStyle,
-									width: "200px",
-									backgroundColor: "#B58863",
-									color: "white",
+									width: '200px',
+									backgroundColor: '#B58863',
+									color: 'white',
 								}}
 							>
 								{ratingRanges.map((rating, index) => (
 									<option key={rating} value={rating}>
 										{rating === 0
-											? "Beginner (0-999)"
+											? 'Beginner (0-999)'
 											: rating === 2500
 												? `Master (${rating}+)`
 												: `${rating}-${ratingRanges[index + 1] - 1}`}
@@ -103,7 +103,7 @@ function App() {
 							</select>
 						</div>
 
-						<div style={{ height: "60vh", width: "60vh" }}>
+						<div style={{ height: '60vh', width: '60vh' }}>
 							<Chessboard
 								id="PlayVsStockfish"
 								position={gamePosition}
@@ -113,7 +113,7 @@ function App() {
 					</div>
 				</div>
 
-				<div style={{ height: "66vh" }}>
+				<div style={{ height: '66vh' }}>
 					<MoveHistory
 						game={game}
 						onNewGame={handleNewGame}
