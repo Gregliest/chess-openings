@@ -80,12 +80,51 @@ function evaluatePosition(engine: Engine, fen: string): Promise<number> {
 		engine.onMessage(({ positionEvaluation, bestMove }) => {
 			if (positionEvaluation && !isFinished) {
 				finalEval = Number.parseInt(positionEvaluation) / 100;
+				// Negate evaluation if it's black's turn since engine evals are from the perspective of the side to move
+				const is_black = fen.split(" ")[1] === "b";
+				if (is_black) {
+					finalEval = -finalEval;
+				}
 			}
 			if (bestMove) {
 				isFinished = true;
 				resolve(finalEval);
 			}
 		});
+	});
+}
+function evaluatePositionWithStockfish(fen: string): Promise<number> {
+	return new Promise((resolve) => {
+		const stockfish = new Worker("./stockfish.wasm.js");
+		let isFinished = false;
+		let finalEval = 0;
+
+		stockfish.addEventListener("message", (e) => {
+			const message = e.data;
+			const cpMatch = message.match(/cp\s+(\S+)/);
+			const mateMatch = message.match(/mate\s+(\S+)/);
+			const bestMoveMatch = message.match(/bestmove\s+(\S+)/);
+
+			if (cpMatch && !isFinished) {
+				finalEval = Number.parseInt(cpMatch[1]) / 100;
+				console.log("finalEval", finalEval);
+			}
+			if (mateMatch && !isFinished) {
+				const mateIn = Number.parseInt(mateMatch[1]);
+				// Convert mate-in-n to a large evaluation score
+				finalEval = mateIn > 0 ? 100 : -100;
+			}
+			if (bestMoveMatch) {
+				isFinished = true;
+				stockfish.terminate();
+				resolve(finalEval);
+			}
+		});
+
+		stockfish.postMessage("uci");
+		stockfish.postMessage("isready");
+		stockfish.postMessage(`position fen ${fen}`);
+		stockfish.postMessage("go depth 12");
 	});
 }
 
@@ -103,16 +142,18 @@ async function getTraps(
 		if (!continuation.fen) continue;
 
 		const newEval = await evaluatePosition(engine, continuation.fen);
+		// If eval changes by more than 2 points against the player to move, it's a trap
+		const isWhiteToMove = continuation.fen.split(" ")[1] === "w";
+		const evalDiff = newEval - initialEval;
+		const isTrap = isWhiteToMove ? evalDiff < -2 : evalDiff > 2;
 
-		// If eval changes by more than 2 points, it's a trap
-		if (Math.abs(newEval - initialEval) > 2) {
+		if (isTrap) {
 			console.log("fen", continuation.fen);
 			console.log("trap", continuation.san, newEval);
 			traps.push({
 				...continuation,
 				trapEval: newEval,
 			});
-			break;
 		}
 	}
 
@@ -123,5 +164,6 @@ export {
 	getOpeningFromLichess,
 	getPossibleContinuations,
 	evaluatePosition,
+	evaluatePositionWithStockfish,
 	getTraps,
 };

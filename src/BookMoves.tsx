@@ -24,14 +24,22 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 	});
 	const [continuations, setContinuations] = useState<Continuation[]>([]);
 	const [traps, setTraps] = useState<Continuation[]>([]);
+	const [isLoadingContinuations, setIsLoadingContinuations] = useState(false);
+	const [isLoadingTraps, setIsLoadingTraps] = useState(false);
 
 	useEffect(() => {
 		getOpeningFromLichess(fen, rating).then(setOpening);
+
+		setIsLoadingContinuations(true);
+		setIsLoadingTraps(true);
+
 		getPossibleContinuations(fen, rating).then(async (moves) => {
 			setContinuations(moves);
+			setIsLoadingContinuations(false);
 
 			const traps = await getTraps(engine, fen, moves);
 			setTraps(traps);
+			setIsLoadingTraps(false);
 		});
 	}, [fen, rating, engine]);
 
@@ -54,56 +62,69 @@ function BookMoves({ fen, rating, engine }: BookMovesProps) {
 				<div style={infoBoxStyle}>
 					<h3>Book Moves</h3>
 					<div>
-						{continuations.map((cont) => (
-							<div
-								key={cont.san}
-								style={{
-									padding: "4px",
-									borderRadius: "4px",
-									fontSize: "0.9rem",
-								}}
-							>
-								{cont.opening?.name && (
-									<div style={{ fontSize: "0.8rem", color: "#666" }}>
-										{cont.opening.name}
-									</div>
-								)}
-								{cont.san} (
-								{Math.round(
-									((cont.white + cont.black + cont.draws) /
-										continuations.reduce(
-											(sum, c) => sum + c.white + c.black + c.draws,
-											0,
-										)) *
-										100,
-								)}
-								%)
+						{isLoadingContinuations ? (
+							<div style={{ color: "#666", fontStyle: "italic" }}>
+								Loading moves...
 							</div>
-						))}
+						) : (
+							continuations.map((cont) => (
+								<div
+									key={cont.san}
+									style={{
+										padding: "4px",
+										borderRadius: "4px",
+										fontSize: "0.9rem",
+									}}
+								>
+									{cont.opening?.name && (
+										<div style={{ fontSize: "0.8rem", color: "#666" }}>
+											{cont.opening.name}
+										</div>
+									)}
+									{cont.san} (
+									{Math.round(
+										((cont.white + cont.black + cont.draws) /
+											continuations.reduce(
+												(sum, c) => sum + c.white + c.black + c.draws,
+												0,
+											)) *
+											100,
+									)}
+									%)
+								</div>
+							))
+						)}
 					</div>
 				</div>
 
 				<div style={infoBoxStyle}>
 					<h3>Opening Traps</h3>
 					<div>
-						{traps.map((trap) => (
-							<div
-								key={trap.san}
-								style={{
-									padding: "4px",
-									borderRadius: "4px",
-									fontSize: "0.9rem",
-									color:
-										trap.trapEval && trap.trapEval < 0 ? "#d32f2f" : "#388e3c",
-								}}
-							>
-								{trap.san} ({trap.trapEval?.toFixed(1)})
+						{isLoadingTraps ? (
+							<div style={{ color: "#666", fontStyle: "italic" }}>
+								Analyzing traps...
 							</div>
-						))}
-						{traps.length === 0 && (
+						) : traps.length === 0 ? (
 							<div style={{ color: "#666", fontStyle: "italic" }}>
 								No traps found
 							</div>
+						) : (
+							traps.map((trap) => (
+								<div
+									key={trap.san}
+									style={{
+										padding: "4px",
+										borderRadius: "4px",
+										fontSize: "0.9rem",
+										color:
+											trap.trapEval && trap.trapEval < 0
+												? "#d32f2f"
+												: "#388e3c",
+									}}
+								>
+									{trap.san} ({trap.trapEval?.toFixed(1)})
+								</div>
+							))
 						)}
 					</div>
 				</div>

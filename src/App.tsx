@@ -4,7 +4,7 @@ import { Chessboard } from "react-chessboard";
 import "./App.css";
 import Engine from "./stockfish/engine";
 import EvalBar from "./EvalBar";
-import { evaluatePosition } from "./chessBrain";
+import { evaluatePosition, evaluatePositionWithStockfish } from "./chessBrain";
 import MoveHistory from "./MoveHistory";
 import BookMoves from "./BookMoves";
 
@@ -50,12 +50,10 @@ function App() {
 		if (game.isGameOver() || game.isDraw()) return false;
 
 		evaluatePosition(engine, game.fen()).then((gameEval) => {
-			console.log("fen", game.fen());
 			console.log("Position evaluation:", gameEval);
 			setEvaluation(gameEval);
 		});
 
-		// findbestmove();
 		return true;
 	}
 
